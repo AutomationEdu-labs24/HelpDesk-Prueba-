@@ -390,7 +390,7 @@ td { padding:13px 16px; font-size:.875rem; }
 <div id="toasts"></div>
  
 <script>
-const API_KEY = 'REEMPLAZA_CON_TU_API_KEY';
+const API_KEY = '';
 let currentId = null;
 let currentTicket = null;
 let activeFilter = { type:'all', value:'all' };
@@ -655,45 +655,25 @@ function copyAI() {
   toast('Sugerencia copiada', 'info');
 }
  
-async function callClaude(messages, system) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:600, system, messages })
-  });
-  const data = await res.json();
-  return data.content[0]?.text || '';
-}
  
 async function autoAI(ticketId, description, priority) {
   let sentiment = 'neutral';
   try {
-    const r = await callClaude(
-      [{role:'user', content:`Analiza el sentimiento de este mensaje. Responde SOLO con una palabra: positivo, neutral, negativo o molesto.\n\nMensaje: "${description}"`}],
-      'Eres un analizador de sentimientos. Solo responde con la palabra exacta.'
-    );
-    sentiment = r.trim().toLowerCase().replace(/[^a-záéíóúñ]/g,'') || 'neutral';
+    const r = await api('/api/tickets/'+ticketId+'/ai/sentiment', 'POST', { text: description });
+    sentiment = r.sentiment || 'neutral';
   } catch(e) {}
- 
-  await api('/api/tickets/'+ticketId+'/messages','POST',{sender:'usuario', content:description, sentiment});
- 
-  if(sentiment==='negativo'||sentiment==='molesto') {
+
+  await api('/api/tickets/'+ticketId+'/messages', 'POST', { sender:'usuario', content:description, sentiment });
+
+  if(sentiment==='negativo' || sentiment==='molesto') {
     toast('⚠️ Ticket #'+ticketId+': sentimiento "'+sentiment+'" detectado. ¡Atención prioritaria!', 'error');
   }
- 
+
   try {
-    const reply = await callClaude(
-      [{role:'user', content:`Genera una respuesta automática para este ticket.\nMensaje: "${description}"\nPrioridad: ${priority}`}],
-      'Eres el asistente de help desk de EduLabs. Responde en español, de forma empática y profesional. Confirma la recepción y di que un técnico contactará pronto.'
-    );
-    await api('/api/tickets/'+ticketId+'/messages','POST',{sender:'ia', content:reply, sentiment:null});
+    const r = await api('/api/tickets/'+ticketId+'/ai/suggest', 'POST', {});
+    await api('/api/tickets/'+ticketId+'/messages', 'POST', { sender:'ia', content:r.suggestion, sentiment:null });
   } catch(e) {
-    await api('/api/tickets/'+ticketId+'/messages','POST',{
+    await api('/api/tickets/'+ticketId+'/messages', 'POST', {
       sender:'ia',
       content:'¡Gracias por contactarnos! Tu ticket fue recibido con prioridad "'+priority+'". Un técnico de EduLabs te contactará pronto. 🎓',
       sentiment:null
@@ -705,15 +685,10 @@ async function genAI() {
   const box = document.getElementById('ai-box');
   box.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:var(--text3)"><div class="ai-dots"><span></span><span></span><span></span></div> Analizando...</div>';
   try {
-    const data = await api('/api/tickets/'+currentId);
-    const msgs = data.messages.map(m=>`[${m.sender}]: ${m.content}`).join('\n');
-    const reply = await callClaude(
-      [{role:'user', content:`Redacta una respuesta para el técnico de help desk.\nTítulo: ${currentTicket.title}\nDescripción: ${currentTicket.description}\nPrioridad: ${currentTicket.priority}\nMensajes:\n${msgs}`}],
-      'Eres un asistente para técnicos de help desk de EduLabs. Redacta respuestas profesionales y empáticas en español.'
-    );
-    box.textContent = reply;
+    const r = await api('/api/tickets/'+currentId+'/ai/suggest', 'POST', {});
+    box.textContent = r.suggestion;
   } catch(e) {
-    box.textContent = 'Error al conectar con la IA. Verifica tu API key en el archivo index.html.';
+    box.textContent = 'Error al conectar con la IA. Verifica tu API key en el archivo .env';
   }
 }
  

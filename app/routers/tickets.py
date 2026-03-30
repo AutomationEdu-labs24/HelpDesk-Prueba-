@@ -4,7 +4,12 @@ from datetime import datetime
 from app.database import get_db
 from app.models import Ticket, TicketHistory, TicketMessage
 from app.schemas import TicketCreate, TicketUpdate, TicketOut, MessageCreate, MessageOut
+import httpx
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY")
 router = APIRouter(prefix="/api/tickets", tags=["tickets"])
 
 # ── Crear ticket ──────────────────────────────────────
@@ -95,3 +100,70 @@ def add_message(ticket_id: int, data: MessageCreate, db: Session = Depends(get_d
     db.commit()
     db.refresh(msg)
     return msg
+
+
+# ── IA: análisis de sentimiento ───────────────────────
+@router.post("/{ticket_id}/ai/sentiment")
+async def analyze_sentiment(ticket_id: int, body: dict, db: Session = Depends(get_db)):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    text = body.get("text", "")
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 10,
+                "system": "Analizador de sentimientos. Responde SOLO con una palabra: positivo, neutral, negativo o molesto.",
+                "messages": [{"role": "user", "content": f"Sentimiento de: \"{text}\""}]
+            },
+            timeout=30
+        )
+    data = res.json()
+    if "content" not in data:
+        print("Error Anthropic:", data)
+        return {"sentiment": "neutral"}
+    sentiment = data["content"][0]["text"].strip().lower().replace(".", "")
+    return {"sentiment": sentiment}
+
+
+# ── IA: generar respuesta ─────────────────────────────
+@router.post("/{ticket_id}/ai/suggest")
+async def suggest_response(ticket_id: int, db: Session = Depends(get_db)):
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    messages_text = "\n".join(
+        [f"[{m.sender}]: {m.content}" for m in ticket.messages]
+    )
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 400,
+                "system": "Eres asistente de help desk de EduLabs. Redacta respuestas profesionales y empáticas en español.",
+                "messages": [{
+                    "role": "user",
+                    "content": f"Título: {ticket.title}\nDescripción: {ticket.description}\nPrioridad: {ticket.priority}\nMensajes:\n{messages_text}\n\nRedacta una respuesta para el técnico."
+                }]
+            },
+            timeout=30
+        )
+    data = res.json()
+    if "content" not in data:
+        print("Error Anthropic:", data)
+        raise HTTPException(status_code=500, detail=str(data))
+    suggestion = data["content"][0]["text"].strip()
+    return {"suggestion": suggestion}
