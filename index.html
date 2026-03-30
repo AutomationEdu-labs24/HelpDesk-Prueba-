@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduLabs Help Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0c0d10; --surface:#13151a; --surface2:#1c1f27; --surface3:#242832;
+  --border:#2a2f3d; --border2:#363d52; --text:#e8eaf0; --text2:#8d93a8; --text3:#5a6175;
+  --accent:#4f9eff; --accent-bg:rgba(79,158,255,.1);
+  --green:#3dd68c; --green-bg:rgba(61,214,140,.1);
+  --yellow:#f5c842; --yellow-bg:rgba(245,200,66,.1);
+  --red:#ff5e5e; --red-bg:rgba(255,94,94,.1);
+  --purple:#a78bfa; --r:8px; --r2:14px;
+}
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+ 
+header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 28px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.logo { display:flex; align-items:center; gap:10px; font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; }
+.logo-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); animation:pulse 2s ease infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main-grid { display:grid; grid-template-columns:240px 1fr; min-height:calc(100vh - 60px); }
+aside { background:var(--surface); border-right:1px solid var(--border); padding:20px 16px; display:flex; flex-direction:column; gap:6px; }
+main { overflow-y:auto; padding:28px; display:flex; flex-direction:column; gap:24px; }
+ 
+.sidebar-label { font-size:.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); padding:12px 8px 4px; }
+.nav-btn { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--r); border:none; background:transparent; color:var(--text2); font-family:inherit; font-size:.875rem; cursor:pointer; transition:all .2s; text-align:left; width:100%; }
+.nav-btn:hover { background:var(--surface2); color:var(--text); }
+.nav-btn.active { background:var(--accent-bg); color:var(--accent); }
+.nav-btn .icon { font-size:1rem; width:20px; text-align:center; }
+.nbadge { margin-left:auto; background:var(--accent); color:#fff; font-size:.65rem; font-weight:700; padding:2px 6px; border-radius:20px; font-family:'DM Mono',monospace; }
+.nbadge-red { background:var(--red) !important; }
+ 
+.view { display:none; flex-direction:column; gap:24px; }
+.view.active { display:flex; }
+ 
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:18px 20px; }
+.stat-val { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; line-height:1; }
+.stat-label { font-size:.75rem; color:var(--text2); margin-top:6px; }
+.blue .stat-val{color:var(--accent)} .green .stat-val{color:var(--green)} .yellow .stat-val{color:var(--yellow)} .red .stat-val{color:var(--red)}
+ 
+.section-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.section-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1.2rem; }
+ 
+.filter-bar { display:flex; gap:8px; flex-wrap:wrap; }
+.chip { padding:5px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:inherit; font-size:.8rem; cursor:pointer; transition:all .2s; }
+.chip:hover { border-color:var(--border2); color:var(--text); }
+.chip.active { border-color:var(--accent); background:var(--accent-bg); color:var(--accent); }
+ 
+.table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); overflow:hidden; }
+table { width:100%; border-collapse:collapse; }
+thead tr { border-bottom:1px solid var(--border); }
+th { padding:12px 16px; text-align:left; font-size:.7rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text3); font-family:'DM Mono',monospace; }
+tbody tr { border-bottom:1px solid var(--border); transition:all .2s; cursor:pointer; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--surface2); }
+td { padding:13px 16px; font-size:.875rem; }
+.t-id { font-family:'DM Mono',monospace; font-size:.75rem; color:var(--text3); }
+.t-title { font-weight:500; }
+.t-sub { font-size:.75rem; color:var(--text3); margin-top:2px; }
+ 
+.badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:.7rem; font-weight:600; font-family:'DM Mono',monospace; }
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; }
+.s-abierto{background:var(--accent-bg);color:var(--accent)} .s-abierto::before{background:var(--accent)}
+.s-en_progreso{background:var(--yellow-bg);color:var(--yellow)} .s-en_progreso::before{background:var(--yellow)}
+.s-resuelto{background:var(--green-bg);color:var(--green)} .s-resuelto::before{background:var(--green)}
+.s-cerrado{background:var(--surface3);color:var(--text3)} .s-cerrado::before{background:var(--text3)}
+.p-alta{background:var(--red-bg);color:var(--red)} .p-alta::before{background:var(--red)}
+.p-media{background:var(--yellow-bg);color:var(--yellow)} .p-media::before{background:var(--yellow)}
+.p-baja{background:var(--green-bg);color:var(--green)} .p-baja::before{background:var(--green)}
+.sent-negativo,.sent-molesto{background:var(--red-bg);color:var(--red);animation:flash 1.2s infinite}
+.sent-positivo{background:var(--green-bg);color:var(--green)}
+.sent-neutral{background:var(--surface3);color:var(--text2)}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.4}}
+ 
+.btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:var(--r); border:none; font-family:inherit; font-size:.875rem; font-weight:500; cursor:pointer; transition:all .2s; }
+.btn-primary{background:var(--accent);color:#fff} .btn-primary:hover{filter:brightness(1.15)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)} .btn-secondary:hover{background:var(--surface3)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid rgba(255,94,94,.3)}
+.btn-ai{background:linear-gradient(135deg,#4f9eff,#a78bfa);color:#fff}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+ 
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:28px; }
+.form-grid { display:flex; flex-direction:column; gap:18px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.field label { font-size:.75rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text2); }
+.field input,.field textarea,.field select { background:var(--surface2); border:1px solid var(--border); border-radius:var(--r); color:var(--text); font-family:inherit; font-size:.9rem; padding:10px 14px; transition:all .2s; outline:none; resize:vertical; }
+.field input:focus,.field textarea:focus,.field select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(79,158,255,.1); }
+.field select option{background:var(--surface2)}
+.hint{font-size:.72rem;color:var(--text3)} .err{font-size:.72rem;color:var(--red)}
+.cc{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text3);text-align:right}
+.cc.ok{color:var(--green)} .cc.warn{color:var(--yellow)}
+ 
+.detail-grid { display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+.detail-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); overflow:hidden; }
+.detail-head { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
+.detail-body { padding:24px; display:flex; flex-direction:column; gap:16px; }
+.desc-box { background:var(--surface2); border:1px solid var(--border); border-radius:var(--r); padding:16px; font-size:.9rem; line-height:1.6; color:var(--text2); }
+.meta-row { display:flex; flex-wrap:wrap; gap:16px; font-size:.8rem; color:var(--text3); font-family:'DM Mono',monospace; }
+ 
+.msg-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); display:flex; flex-direction:column; max-height:500px; overflow:hidden; margin-top:16px; }
+.msg-head { padding:14px 20px; border-bottom:1px solid var(--border); font-weight:600; font-size:.875rem; display:flex; align-items:center; justify-content:space-between; }
+.msg-body { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; }
+.msg { display:flex; flex-direction:column; gap:4px; animation:fadeUp .3s ease; }
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}}
+.msg-bubble { padding:10px 14px; border-radius:var(--r); font-size:.85rem; line-height:1.55; max-width:90%; }
+.msg.user .msg-bubble{background:var(--surface2);border:1px solid var(--border);align-self:flex-start}
+.msg.ia .msg-bubble{background:var(--accent-bg);border:1px solid rgba(79,158,255,.2);align-self:flex-start}
+.msg.tecnico .msg-bubble{background:var(--green-bg);border:1px solid rgba(61,214,140,.2);align-self:flex-end}
+.msg-meta { font-size:.65rem; color:var(--text3); font-family:'DM Mono',monospace; display:flex; align-items:center; gap:8px; }
+.msg.tecnico .msg-meta{justify-content:flex-end}
+.msg-footer { border-top:1px solid var(--border); padding:12px; display:flex; flex-direction:column; gap:8px; }
+.msg-row { display:flex; gap:8px; }
+.msg-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:var(--r); color:var(--text); font-family:inherit; font-size:.85rem; padding:9px 13px; outline:none; resize:none; transition:all .2s; }
+.msg-input:focus{border-color:var(--accent)}
+ 
+.ai-panel { background:linear-gradient(135deg,rgba(79,158,255,.06),rgba(167,139,250,.06)); border:1px solid rgba(79,158,255,.2); border-radius:var(--r2); padding:16px; }
+.ai-header { display:flex; align-items:center; gap:8px; font-weight:600; font-size:.875rem; margin-bottom:12px; }
+.ai-icon { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:.85rem; }
+.ai-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px; font-size:.82rem; line-height:1.6; color:var(--text2); min-height:60px; white-space:pre-wrap; }
+.ai-dots span { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--accent); animation:bounce .9s ease infinite; margin:0 2px; }
+.ai-dots span:nth-child(2){animation-delay:.15s} .ai-dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+ 
+.history-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); overflow:hidden; }
+.history-head { padding:14px 20px; border-bottom:1px solid var(--border); font-weight:600; font-size:.875rem; }
+.history-list { padding:16px; display:flex; flex-direction:column; }
+.h-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:.8rem; }
+.h-item:last-child{border-bottom:none}
+.h-icon { width:28px; height:28px; border-radius:50%; background:var(--surface3); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.h-label{font-weight:500} .h-change{color:var(--text3);margin-top:2px} .h-time{color:var(--text3);font-family:'DM Mono',monospace;font-size:.7rem}
+ 
+.alert { background:var(--red-bg); border:1px solid rgba(255,94,94,.3); border-radius:var(--r); padding:12px 16px; font-size:.85rem; color:var(--red); display:flex; align-items:center; gap:10px; }
+.status-sel { background:var(--surface2); border:1px solid var(--border); border-radius:var(--r); color:var(--text); font-family:inherit; font-size:.85rem; padding:7px 12px; cursor:pointer; outline:none; width:100%; }
+ 
+.empty { text-align:center; padding:60px 20px; color:var(--text3); display:flex; flex-direction:column; align-items:center; gap:12px; }
+.empty-icon{font-size:2.5rem}
+ 
+#toasts { position:fixed; bottom:24px; right:24px; display:flex; flex-direction:column; gap:8px; z-index:9999; }
+.toast { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px 18px; font-size:.85rem; box-shadow:0 4px 24px rgba(0,0,0,.4); animation:toastIn .3s ease; max-width:320px; }
+.toast.success{border-left:3px solid var(--green)} .toast.error{border-left:3px solid var(--red)} .toast.info{border-left:3px solid var(--accent)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}}
+ 
+.spinner { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; display:inline-block; }
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.flex{display:flex} .gap-8{gap:8px} .mt-8{margin-top:8px}
+</style>
+</head>
+<body>
+ 
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span>EduLabs</span>
+    <span style="color:var(--text3);font-weight:400">Help Desk</span>
+  </div>
+  <div class="flex gap-8" style="align-items:center">
+    <span id="hd-count" style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--text3)"></span>
+    <button class="btn btn-primary btn-sm" onclick="showView('create')">＋ Nuevo Ticket</button>
+  </div>
+</header>
+ 
+<div class="main-grid">
+  <aside>
+    <div class="sidebar-label">Vistas</div>
+    <button class="nav-btn active" id="nav-dashboard" onclick="showView('dashboard')">
+      <span class="icon">◈</span> Dashboard
+    </button>
+    <button class="nav-btn" id="nav-tickets" onclick="showView('tickets')">
+      <span class="icon">≡</span> Todos los tickets
+      <span class="nbadge" id="b-total">0</span>
+    </button>
+    <button class="nav-btn" id="nav-create" onclick="showView('create')">
+      <span class="icon">＋</span> Crear ticket
+    </button>
+    <div class="sidebar-label">Por Estado</div>
+    <button class="nav-btn" onclick="filterStatus('abierto')"><span class="icon" style="color:var(--accent)">●</span> Abiertos <span class="nbadge" id="b-ab">0</span></button>
+    <button class="nav-btn" onclick="filterStatus('en_progreso')"><span class="icon" style="color:var(--yellow)">●</span> En progreso <span class="nbadge" id="b-ep">0</span></button>
+    <button class="nav-btn" onclick="filterStatus('resuelto')"><span class="icon" style="color:var(--green)">●</span> Resueltos <span class="nbadge" id="b-re">0</span></button>
+    <button class="nav-btn" onclick="filterStatus('cerrado')"><span class="icon" style="color:var(--text3)">●</span> Cerrados <span class="nbadge" id="b-ce">0</span></button>
+    <div class="sidebar-label">Prioridad</div>
+    <button class="nav-btn" onclick="filterPriority('alta')"><span class="icon" style="color:var(--red)">▲</span> Alta prioridad <span class="nbadge nbadge-red" id="b-al">0</span></button>
+  </aside>
+ 
+  <main>
+ 
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-val" id="s-total">—</div><div class="stat-label">Total tickets</div></div>
+        <div class="stat-card yellow"><div class="stat-val" id="s-ab">—</div><div class="stat-label">Abiertos</div></div>
+        <div class="stat-card green"><div class="stat-val" id="s-re">—</div><div class="stat-label">Resueltos</div></div>
+        <div class="stat-card red"><div class="stat-val" id="s-al">—</div><div class="stat-label">Alta prioridad</div></div>
+      </div>
+      <div class="section-head">
+        <div class="section-title">Tickets recientes</div>
+        <button class="btn btn-secondary btn-sm" onclick="showView('tickets')">Ver todos →</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Título</th><th>Prioridad</th><th>Estado</th><th>Asignado a</th><th>Creado</th></tr></thead>
+        <tbody id="tb-recent"></tbody></table>
+      </div>
+    </div>
+ 
+    <!-- TICKETS -->
+    <div class="view" id="view-tickets">
+      <div class="section-head">
+        <div class="section-title">Tickets</div>
+        <div class="filter-bar">
+          <button class="chip active" onclick="setFilter('all','all',this)">Todos</button>
+          <button class="chip" onclick="setFilter('status','abierto',this)">Abierto</button>
+          <button class="chip" onclick="setFilter('status','en_progreso',this)">En progreso</button>
+          <button class="chip" onclick="setFilter('status','resuelto',this)">Resuelto</button>
+          <button class="chip" onclick="setFilter('status','cerrado',this)">Cerrado</button>
+          <span style="color:var(--border)">|</span>
+          <button class="chip" onclick="setFilter('priority','alta',this)" style="color:var(--red)">Alta</button>
+          <button class="chip" onclick="setFilter('priority','media',this)" style="color:var(--yellow)">Media</button>
+          <button class="chip" onclick="setFilter('priority','baja',this)" style="color:var(--green)">Baja</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Título</th><th>Prioridad</th><th>Estado</th><th>Asignado a</th><th>Actualizado</th></tr></thead>
+        <tbody id="tb-all"></tbody></table>
+      </div>
+    </div>
+ 
+    <!-- CREAR -->
+    <div class="view" id="view-create">
+      <div class="section-head"><div class="section-title">Nuevo ticket</div></div>
+      <div class="form-card">
+        <form class="form-grid" onsubmit="submitTicket(event)">
+          <div class="field">
+            <label>Título *</label>
+            <input type="text" id="f-title" placeholder="Describe brevemente el problema..." oninput="cc('f-title','cc-title',10)">
+            <div class="flex" style="justify-content:space-between"><span class="hint">Mínimo 11 caracteres</span><span class="cc" id="cc-title">0</span></div>
+            <span class="err hidden" id="e-title"></span>
+          </div>
+          <div class="field">
+            <label>Descripción *</label>
+            <textarea id="f-desc" rows="4" placeholder="Describe el problema con detalle..." oninput="cc('f-desc','cc-desc',30)"></textarea>
+            <div class="flex" style="justify-content:space-between"><span class="hint">Mínimo 31 caracteres</span><span class="cc" id="cc-desc">0</span></div>
+            <span class="err hidden" id="e-desc"></span>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>Prioridad *</label>
+              <select id="f-priority">
+                <option value="">— Seleccionar —</option>
+                <option value="alta">🔴 Alta</option>
+                <option value="media">🟡 Media</option>
+                <option value="baja">🟢 Baja</option>
+              </select>
+              <span class="err hidden" id="e-priority"></span>
+            </div>
+            <div class="field">
+              <label>Asignar a</label>
+              <input type="text" id="f-assigned" placeholder="Nombre del técnico (opcional)">
+            </div>
+          </div>
+          <div class="flex gap-8" style="justify-content:flex-end">
+            <button type="button" class="btn btn-secondary" onclick="showView('tickets')">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="btn-create">Crear ticket</button>
+          </div>
+        </form>
+      </div>
+    </div>
+ 
+    <!-- DETALLE -->
+    <div class="view" id="view-detail">
+      <div class="section-head">
+        <div class="section-title" id="det-breadcrumb">Detalle</div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="showView('tickets')">← Volver</button>
+          <button class="btn btn-danger btn-sm" id="btn-delete">🗑 Eliminar</button>
+        </div>
+      </div>
+ 
+      <div id="det-alert" class="hidden"></div>
+ 
+      <div class="detail-grid">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="detail-card">
+            <div class="detail-head">
+              <div class="flex gap-8" style="align-items:center;flex-wrap:wrap">
+                <span class="t-id" id="det-id"></span>
+                <span class="badge" id="det-prio"></span>
+                <span class="badge" id="det-status"></span>
+              </div>
+              <div id="det-title" style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700"></div>
+              <div class="meta-row">
+                <span>📅 <b id="det-created"></b></span>
+                <span>🔄 <b id="det-updated"></b></span>
+                <span>👤 <b id="det-assigned"></b></span>
+              </div>
+            </div>
+            <div class="detail-body">
+ 
+              <div class="field">
+                <label>Descripción actual</label>
+                <div class="desc-box" id="det-desc"></div>
+              </div>
+ 
+              <!-- Fila 1: Estado y Prioridad -->
+              <div class="form-row">
+                <div class="field">
+                  <label>Cambiar estado</label>
+                  <select class="status-sel" id="det-status-sel" onchange="changeStatus(this.value)">
+                    <option value="abierto">● Abierto</option>
+                    <option value="en_progreso">● En progreso</option>
+                    <option value="resuelto">● Resuelto</option>
+                    <option value="cerrado">● Cerrado</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Cambiar prioridad</label>
+                  <select class="status-sel" id="det-prio-sel" onchange="changePriority(this.value)">
+                    <option value="alta">🔴 Alta</option>
+                    <option value="media">🟡 Media</option>
+                    <option value="baja">🟢 Baja</option>
+                  </select>
+                </div>
+              </div>
+ 
+              <!-- Fila 2: Reasignar y Editar descripción -->
+              <div class="form-row">
+                <div class="field">
+                  <label>Reasignar a</label>
+                  <div class="flex gap-8">
+                    <input type="text" id="det-assign-in" class="msg-input" style="flex:1" placeholder="Técnico...">
+                    <button class="btn btn-secondary btn-sm" onclick="reassign()">Guardar</button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Editar descripción</label>
+                  <div class="flex gap-8">
+                    <textarea id="det-desc-in" class="msg-input" rows="2" style="flex:1" placeholder="Nueva descripción (mín. 31 caracteres)..."></textarea>
+                    <button class="btn btn-secondary btn-sm" onclick="changeDesc()">Guardar</button>
+                  </div>
+                </div>
+              </div>
+ 
+            </div>
+          </div>
+ 
+          <!-- Mensajes -->
+          <div class="msg-panel">
+            <div class="msg-head">
+              💬 Mensajes
+              <span id="msg-count" style="font-size:.75rem;color:var(--text3);font-family:'DM Mono',monospace"></span>
+            </div>
+            <div class="msg-body" id="msg-body"></div>
+            <div class="msg-footer">
+              <div class="ai-panel">
+                <div class="ai-header">
+                  <div class="ai-icon">✦</div> Asistente IA
+                  <button class="btn btn-ai btn-sm" style="margin-left:auto" onclick="genAI()">✦ Generar respuesta</button>
+                </div>
+                <div class="ai-box" id="ai-box">Haz clic en "Generar respuesta" para que la IA redacte una sugerencia.</div>
+                <div class="flex gap-8 mt-8">
+                  <button class="btn btn-secondary btn-sm" onclick="copyAI()">📋 Usar esta respuesta</button>
+                </div>
+              </div>
+              <div class="msg-row">
+                <textarea class="msg-input" id="msg-in" rows="2" placeholder="Escribe tu respuesta..." onkeydown="if(event.key==='Enter'&&event.ctrlKey)sendMsg()"></textarea>
+                <button class="btn btn-primary" onclick="sendMsg()">➤</button>
+              </div>
+              <div style="font-size:.7rem;color:var(--text3)">Ctrl+Enter para enviar</div>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Historial -->
+        <div class="history-card">
+          <div class="history-head">📜 Historial de cambios</div>
+          <div class="history-list" id="history-list"></div>
+        </div>
+      </div>
+    </div>
+ 
+  </main>
+</div>
+ 
+<div id="toasts"></div>
+ 
+<script>
+const API_KEY = 'REEMPLAZA_CON_TU_API_KEY';
+let currentId = null;
+let currentTicket = null;
+let activeFilter = { type:'all', value:'all' };
+ 
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  const nb = document.getElementById('nav-'+name);
+  if(nb) nb.classList.add('active');
+  if(name==='dashboard'){ loadStats(); loadTickets('tb-recent', 8); }
+  if(name==='tickets') loadTickets('tb-all');
+  if(name==='create') resetForm();
+}
+ 
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers:{'Content-Type':'application/json'} };
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  const data = await res.json();
+  if(!res.ok) throw data;
+  return data;
+}
+ 
+async function loadStats() {
+  const s = await api('/api/stats');
+  document.getElementById('s-total').textContent = s.total;
+  document.getElementById('s-ab').textContent    = s.abierto;
+  document.getElementById('s-re').textContent    = s.resuelto;
+  document.getElementById('s-al').textContent    = s.alta;
+  document.getElementById('b-total').textContent = s.total;
+  document.getElementById('b-ab').textContent    = s.abierto;
+  document.getElementById('b-ep').textContent    = s.en_progreso;
+  document.getElementById('b-re').textContent    = s.resuelto;
+  document.getElementById('b-ce').textContent    = s.cerrado;
+  document.getElementById('b-al').textContent    = s.alta;
+  document.getElementById('hd-count').textContent= s.total + ' tickets';
+}
+ 
+async function loadTickets(tbodyId='tb-all', limit=null) {
+  let path = '/api/tickets';
+  if(activeFilter.type==='status')   path += '?status='+activeFilter.value;
+  if(activeFilter.type==='priority') path += '?priority='+activeFilter.value;
+  const tickets = await api(path);
+  const data = limit ? tickets.slice(0,limit) : tickets;
+  renderTable(data, tbodyId);
+  loadStats();
+}
+ 
+function renderTable(tickets, tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if(!tickets.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div><p>No hay tickets</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = tickets.map(t => `
+    <tr onclick="openTicket(${t.id})">
+      <td class="t-id">#${t.id}</td>
+      <td><div class="t-title">${esc(t.title)}</div><div class="t-sub">${esc(t.description.slice(0,55))}…</div></td>
+      <td><span class="badge p-${t.priority}">${t.priority}</span></td>
+      <td><span class="badge s-${t.status}">${fmtS(t.status)}</span></td>
+      <td style="color:var(--text2);font-size:.82rem">${esc(t.assigned_to)}</td>
+      <td style="color:var(--text3);font-size:.78rem;font-family:'DM Mono',monospace">${fmtD(t.updated_at)}</td>
+    </tr>`).join('');
+}
+ 
+function setFilter(type, value, el) {
+  activeFilter = {type, value};
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  loadTickets('tb-all');
+}
+function filterStatus(s)   { activeFilter={type:'status',value:s};   showView('tickets'); }
+function filterPriority(p) { activeFilter={type:'priority',value:p}; showView('tickets'); }
+ 
+async function openTicket(id) {
+  currentId = id;
+  showView('detail');
+  document.getElementById('det-breadcrumb').textContent = 'Ticket #'+id;
+  const data = await api('/api/tickets/'+id);
+  currentTicket = data.ticket;
+  renderDetail(data);
+}
+ 
+function renderDetail(data) {
+  const t = data.ticket;
+  document.getElementById('det-id').textContent       = '#'+t.id;
+  document.getElementById('det-title').textContent    = t.title;
+  document.getElementById('det-desc').textContent     = t.description;
+  document.getElementById('det-created').textContent  = fmtD(t.created_at);
+  document.getElementById('det-updated').textContent  = fmtD(t.updated_at);
+  document.getElementById('det-assigned').textContent = t.assigned_to;
+  document.getElementById('det-assign-in').value      = t.assigned_to;
+  document.getElementById('det-prio').className       = 'badge p-'+t.priority;
+  document.getElementById('det-prio').textContent     = t.priority;
+  document.getElementById('det-status').className     = 'badge s-'+t.status;
+  document.getElementById('det-status').textContent   = fmtS(t.status);
+  document.getElementById('det-status-sel').value     = t.status;
+  document.getElementById('det-prio-sel').value       = t.priority;
+  document.getElementById('btn-delete').onclick       = () => deleteTicket(t.id);
+ 
+  const hasAlert = data.messages.some(m => m.sentiment && (m.sentiment.includes('negativo') || m.sentiment.includes('molesto')));
+  const alertEl = document.getElementById('det-alert');
+  if(hasAlert) {
+    alertEl.className = 'alert';
+    alertEl.innerHTML = '⚠️ <strong>Alerta:</strong> Se detectó insatisfacción o molestia. ¡Atención prioritaria!';
+    alertEl.classList.remove('hidden');
+  } else {
+    alertEl.classList.add('hidden');
+  }
+ 
+  renderMessages(data.messages);
+  renderHistory(data.history);
+}
+ 
+function renderMessages(msgs) {
+  const body = document.getElementById('msg-body');
+  document.getElementById('msg-count').textContent = msgs.length + ' mensajes';
+  if(!msgs.length) {
+    body.innerHTML = `<div class="empty"><div class="empty-icon">💬</div><p>Sin mensajes</p></div>`;
+    return;
+  }
+  body.innerHTML = msgs.map(m => {
+    const cls = m.sender==='usuario'?'user': m.sender==='ia'?'ia':'tecnico';
+    const sent = m.sentiment ? `<span class="badge sent-${m.sentiment}" style="font-size:.62rem;padding:2px 7px">${m.sentiment}</span>` : '';
+    return `<div class="msg ${cls}">
+      <div class="msg-meta"><b>${fmtSender(m.sender)}</b>${sent}<span style="margin-left:auto">${fmtD(m.created_at)}</span></div>
+      <div class="msg-bubble">${esc(m.content)}</div>
+    </div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+ 
+function renderHistory(history) {
+  const el = document.getElementById('history-list');
+  if(!history.length) {
+    el.innerHTML = `<div class="empty" style="padding:20px"><p>Sin historial</p></div>`;
+    return;
+  }
+  const icons = {status:'🔄', priority:'⚡', assigned_to:'👤', title:'✏️', description:'📝'};
+  el.innerHTML = history.map(h => `
+    <div class="h-item">
+      <div class="h-icon">${icons[h.field]||'📝'}</div>
+      <div>
+        <div class="h-label">${h.note||'Cambio en '+h.field}</div>
+        <div class="h-change">
+          ${h.old_value ? `<span style="color:var(--red);text-decoration:line-through">${h.old_value}</span> → ` : ''}
+          <span style="color:var(--green)">${h.new_value}</span>
+        </div>
+        <div class="h-time">${fmtD(h.changed_at)}</div>
+      </div>
+    </div>`).join('');
+}
+ 
+function resetForm() {
+  ['f-title','f-desc','f-assigned'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-priority').value='';
+  ['cc-title','cc-desc'].forEach(id => { const el=document.getElementById(id); el.textContent='0'; el.className='cc'; });
+  ['e-title','e-desc','e-priority'].forEach(id => { const el=document.getElementById(id); el.textContent=''; el.classList.add('hidden'); });
+}
+ 
+function cc(inputId, countId, min) {
+  const val = document.getElementById(inputId).value;
+  const el = document.getElementById(countId);
+  el.textContent = val.length;
+  el.className = 'cc' + (val.length > min ? ' ok' : val.length > min*.7 ? ' warn' : '');
+}
+ 
+async function submitTicket(e) {
+  e.preventDefault();
+  const title       = document.getElementById('f-title').value.trim();
+  const description = document.getElementById('f-desc').value.trim();
+  const priority    = document.getElementById('f-priority').value;
+  const assigned_to = document.getElementById('f-assigned').value.trim() || 'Sin asignar';
+ 
+  let valid = true;
+  const setErr = (id, msg) => {
+    const el = document.getElementById(id);
+    if(msg){ el.textContent=msg; el.classList.remove('hidden'); valid=false; }
+    else el.classList.add('hidden');
+  };
+  setErr('e-title',    title.length<=10 ? 'El título debe tener más de 10 caracteres.' : '');
+  setErr('e-desc',     description.length<=30 ? 'La descripción debe tener más de 30 caracteres.' : '');
+  setErr('e-priority', !priority ? 'Selecciona una prioridad.' : '');
+  if(!valid) return;
+ 
+  const btn = document.getElementById('btn-create');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Creando...';
+ 
+  try {
+    const res = await api('/api/tickets','POST',{title,description,priority,assigned_to});
+    toast('✅ Ticket creado', 'success');
+    await autoAI(res.id, description, priority);
+    showView('tickets');
+  } catch(err) {
+    toast('Error al crear ticket', 'error');
+  } finally {
+    btn.disabled=false; btn.textContent='Crear ticket';
+  }
+}
+ 
+async function changeStatus(newStatus) {
+  await api('/api/tickets/'+currentId,'PATCH',{status:newStatus, note:'Estado cambiado a '+fmtS(newStatus)});
+  toast('Estado actualizado', 'success');
+  const data = await api('/api/tickets/'+currentId);
+  currentTicket = data.ticket;
+  renderDetail(data);
+}
+ 
+async function changePriority(newPriority) {
+  await api('/api/tickets/'+currentId,'PATCH',{priority:newPriority, note:'Prioridad cambiada a '+newPriority});
+  toast('Prioridad actualizada', 'success');
+  const data = await api('/api/tickets/'+currentId);
+  currentTicket = data.ticket;
+  renderDetail(data);
+}
+ 
+async function reassign() {
+  const val = document.getElementById('det-assign-in').value.trim();
+  if(!val) return;
+  await api('/api/tickets/'+currentId,'PATCH',{assigned_to:val, note:'Reasignado a '+val});
+  toast('Reasignado correctamente', 'success');
+  const data = await api('/api/tickets/'+currentId);
+  renderDetail(data);
+}
+ 
+async function changeDesc() {
+  const val = document.getElementById('det-desc-in').value.trim();
+  if(val.length <= 30) {
+    toast('La descripción debe tener más de 30 caracteres.', 'error');
+    return;
+  }
+  await api('/api/tickets/'+currentId,'PATCH',{description:val, note:'Descripción actualizada'});
+  toast('Descripción actualizada', 'success');
+  document.getElementById('det-desc-in').value = '';
+  const data = await api('/api/tickets/'+currentId);
+  currentTicket = data.ticket;
+  renderDetail(data);
+}
+ 
+async function deleteTicket(id) {
+  if(!confirm('¿Eliminar ticket #'+id+'?')) return;
+  await api('/api/tickets/'+id,'DELETE');
+  toast('Ticket eliminado', 'success');
+  showView('tickets');
+}
+ 
+async function sendMsg() {
+  const input = document.getElementById('msg-in');
+  const content = input.value.trim();
+  if(!content) return;
+  await api('/api/tickets/'+currentId+'/messages','POST',{sender:'tecnico',content,sentiment:null});
+  input.value='';
+  const data = await api('/api/tickets/'+currentId);
+  renderDetail(data);
+}
+ 
+function copyAI() {
+  const text = document.getElementById('ai-box').textContent;
+  if(!text || text.includes('Haz clic')) return;
+  document.getElementById('msg-in').value = text;
+  toast('Sugerencia copiada', 'info');
+}
+ 
+async function callClaude(messages, system) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:600, system, messages })
+  });
+  const data = await res.json();
+  return data.content[0]?.text || '';
+}
+ 
+async function autoAI(ticketId, description, priority) {
+  let sentiment = 'neutral';
+  try {
+    const r = await callClaude(
+      [{role:'user', content:`Analiza el sentimiento de este mensaje. Responde SOLO con una palabra: positivo, neutral, negativo o molesto.\n\nMensaje: "${description}"`}],
+      'Eres un analizador de sentimientos. Solo responde con la palabra exacta.'
+    );
+    sentiment = r.trim().toLowerCase().replace(/[^a-záéíóúñ]/g,'') || 'neutral';
+  } catch(e) {}
+ 
+  await api('/api/tickets/'+ticketId+'/messages','POST',{sender:'usuario', content:description, sentiment});
+ 
+  if(sentiment==='negativo'||sentiment==='molesto') {
+    toast('⚠️ Ticket #'+ticketId+': sentimiento "'+sentiment+'" detectado. ¡Atención prioritaria!', 'error');
+  }
+ 
+  try {
+    const reply = await callClaude(
+      [{role:'user', content:`Genera una respuesta automática para este ticket.\nMensaje: "${description}"\nPrioridad: ${priority}`}],
+      'Eres el asistente de help desk de EduLabs. Responde en español, de forma empática y profesional. Confirma la recepción y di que un técnico contactará pronto.'
+    );
+    await api('/api/tickets/'+ticketId+'/messages','POST',{sender:'ia', content:reply, sentiment:null});
+  } catch(e) {
+    await api('/api/tickets/'+ticketId+'/messages','POST',{
+      sender:'ia',
+      content:'¡Gracias por contactarnos! Tu ticket fue recibido con prioridad "'+priority+'". Un técnico de EduLabs te contactará pronto. 🎓',
+      sentiment:null
+    });
+  }
+}
+ 
+async function genAI() {
+  const box = document.getElementById('ai-box');
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:var(--text3)"><div class="ai-dots"><span></span><span></span><span></span></div> Analizando...</div>';
+  try {
+    const data = await api('/api/tickets/'+currentId);
+    const msgs = data.messages.map(m=>`[${m.sender}]: ${m.content}`).join('\n');
+    const reply = await callClaude(
+      [{role:'user', content:`Redacta una respuesta para el técnico de help desk.\nTítulo: ${currentTicket.title}\nDescripción: ${currentTicket.description}\nPrioridad: ${currentTicket.priority}\nMensajes:\n${msgs}`}],
+      'Eres un asistente para técnicos de help desk de EduLabs. Redacta respuestas profesionales y empáticas en español.'
+    );
+    box.textContent = reply;
+  } catch(e) {
+    box.textContent = 'Error al conectar con la IA. Verifica tu API key en el archivo index.html.';
+  }
+}
+ 
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtD(d){ if(!d)return'—'; return new Date(d).toLocaleDateString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function fmtS(s){ return {abierto:'Abierto',en_progreso:'En progreso',resuelto:'Resuelto',cerrado:'Cerrado'}[s]||s; }
+function fmtSender(s){ return {usuario:'👤 Usuario',ia:'✦ IA',tecnico:'🔧 Técnico'}[s]||s; }
+function toast(msg, type='info'){
+  const c=document.getElementById('toasts');
+  const el=document.createElement('div'); el.className='toast '+type; el.textContent=msg;
+  c.appendChild(el); setTimeout(()=>el.remove(),4000);
+}
+ 
+loadStats();
+loadTickets('tb-recent', 8);
+</script>
+</body>
+</html>
