@@ -1,8 +1,7 @@
-# 🎓 EduLabs Help Desk
-
+# Solución Construida
 Sistema interno de Help Desk con IA integrada para EduLabs.
 
-## Stack
+## Herramientas utilizadas 
 - **Backend:** Python + FastAPI
 - **Base de datos:** SQLite + SQLAlchemy ORM
 - **Frontend:** HTML + CSS + JavaScript vanilla
@@ -11,14 +10,14 @@ Sistema interno de Help Desk con IA integrada para EduLabs.
 ## Instalación y ejecución
 
 1. Clona el repositorio:
-   git clone https://github.com/TU_USUARIO/helpdesk-edulabs.git
+   git clone https://github.com/AutomationEdu-labs24/HelpDesk-Prueba-.git
    cd helpdesk-edulabs
 
 2. Instala las dependencias:
-   python -m pip install fastapi uvicorn sqlalchemy
+   python -m pip install fastapi uvicorn sqlalchemy httpx python-dotenv
 
-3. Configura tu API key de Anthropic en index.html:
-   Busca: const API_KEY = 'REEMPLAZA_CON_TU_API_KEY';
+3. Crea un archivo .env en la raíz con tu API key:
+   ANTHROPIC_API_KEY=tu-api-key-aqui
 
 4. Inicia el servidor:
    python -m uvicorn main:app --reload
@@ -36,6 +35,10 @@ Sistema interno de Help Desk con IA integrada para EduLabs.
 - API REST documentada en /docs
 
 ## Funcionalidades pendientes
-- Autenticación de usuarios
-- Notificaciones por email
-- Roles: administrador, técnico, usuario
+- Notificación por correo
+- Roles: administrador, técnico y usuario final
+- Login y autenticación de usuarios
+
+## Motivo 
+- Falta de conocimientos tecnicos por parte del desarrollador
+ 
